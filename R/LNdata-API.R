@@ -17,16 +17,14 @@ curl<-getCurlHandle()
 #curlSetOpt(curl=curl,.opts=list(POSTFIELDS='{"aEstadoTabla":[{"TablaNombre":"tbAcciones","F$
                                         
 
-get_lndata<-function(target_url){
-  query_url<-paste(target_url,'?auth_key=',lndata_api_key,sep='')  
+get_lndata<-function(dataset){
+  query_url<-paste('http://lanacion.cloudapi.junar.com/datastreams/invoke/',dataset,'?auth_key=',lndata_api_key,sep='')  
   ret_json<-getURL(query_url, write = basicTextGatherer(),curl=curl)  
   ret<-fromJSON(ret_json)
+  ret
 }
 
-target_url<-'http://lanacion.cloudapi.junar.com/datastreams/invoke/IPC-CIUDA-AUTON-DE-BUENO'
-get_lndata('http://lanacion.cloudapi.junar.com/datastreams/invoke/IPC-CIUDA-AUTON-DE-BUENO')
+get_lndata('IPC-CIUDA-AUTON-DE-BUENO')
 
+get_lndata('VARIA-DE-LA-INFLA-EN')
 
-
-                                      
-ipc_caba<-rcu
