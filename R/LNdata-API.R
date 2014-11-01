@@ -1,3 +1,4 @@
+#install.packages('RCurl')
 library(RCurl)
 #install.packages('rjson')
 library(rjson)
@@ -17,14 +18,21 @@ curl<-getCurlHandle()
 #curlSetOpt(curl=curl,.opts=list(POSTFIELDS='{"aEstadoTabla":[{"TablaNombre":"tbAcciones","F$
                                         
 
+#dataset<-'IPC-CIUDA-AUTON-DE-BUENO'
 get_lndata<-function(dataset){
-  query_url<-paste('http://lanacion.cloudapi.junar.com/datastreams/invoke/',dataset,'?auth_key=',lndata_api_key,sep='')  
-  ret_json<-getURL(query_url, write = basicTextGatherer(),curl=curl)  
-  ret<-fromJSON(ret_json)
+  query_url<-paste('http://lanacion.cloudapi.junar.com/datastreams/invoke/',
+                   dataset,'?auth_key=',lndata_api_key,
+                   '&output=csv',sep='')  
+  #&output=json_array
+  #ret_json<-getURL(query_url, write = basicTextGatherer(),curl=curl)  
+  #ret<-fromJSON(ret_json)
+  #
+  ret_csv<-getURL(query_url, write = basicTextGatherer(),curl=curl)  
+  ret<-read.csv(text=ret_csv)
   ret
 }
 
-get_lndata('IPC-CIUDA-AUTON-DE-BUENO')
+data_ipc_caba<-get_lndata('IPC-CIUDA-AUTON-DE-BUENO')
 
 get_lndata('VARIA-DE-LA-INFLA-EN')
 
