@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Datafest 2014</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- MetisMenu CSS -->
+    <link href="css/plugins/metisMenu/metisMenu.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/sb-admin-2.css" rel="stylesheet">
+    <link href="css/nv.d3.min.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="font-awesome-4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+    <div id="wrapper">
+
+        <!-- Navigation -->
+        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">SB Admin v2.0</a>
+            </div>
+            <!-- /.navbar-header -->
+
+            <div class="navbar-default sidebar" role="navigation">
+                <div class="sidebar-nav navbar-collapse">
+                    <ul class="nav" id="list_charts">
+                        
+                    </ul>
+                </div>
+                <!-- /.sidebar-collapse -->
+            </div>
+            <!-- /.navbar-static-side -->
+        </nav>
+
+        <!-- Page Content -->
+        <div id="page-wrapper">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 class="page-header">Blank</h1>
+                    <style>
+
+                        #chart svg {
+                          height: 400px;
+                        }
+
+                        </style>
+
+
+                        <div id="chart">
+                          <svg></svg>
+                        </div>
+                        
+                        <br>
+                        <br>
+
+                        <div id="tabla">
+                            <table class="table table-striped table-bordered table-hover" id="dataTables">
+                                    <thead>
+                                        <tr>
+                                            <th>Ciudad</th>
+                                            <th>apertura</th>
+                                            <th>Período</th>
+                                            <th>Variación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        
+                                    </tbody>
+                            </table>
+                        </div>
+                    <!-- Charts -->
+                </div>
+                <!-- /.col-lg-12 -->
+            </div>
+            <!-- /.row -->
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    <!-- jQuery -->
+    <script src="js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Metis Menu Plugin JavaScript -->
+    <script src="js/plugins/metisMenu/metisMenu.min.js"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="js/sb-admin-2.js"></script>
+    
+    <script src="js/d3.v3.js"></script>
+
+    <script src="js/nv.d3.min.js"></script>
+    <script src="js/plugins/dataTables/jquery.dataTables.js"></script>
+    <script src="js/plugins/dataTables/dataTables.bootstrap.js"></script>
+
+    <script>
+    
+    d3.csv('data/opendata-analisis-ibp-procesamiento-agregados.csv', function(error, data){
+        
+        // parse data for chart
+        
+        data = data.filter(function(d){ return d.apertura != "CBA";});
+        data = data.map(function(d){
+            var date = d.periodo.split("-");
+            return [d.ciudad, d.apertura, new Date(date[0], date[1]).getTime(), +d.variacion, d.periodo];
+        });        
+        
+        var ciudades = d3.nest()
+                            .key(function(d){ return d[0]})
+                            .key(function(d){ return d[1]})
+                            .entries(data)
+        
+        var list_charts = "";   
+        
+        for(var i = 0; i < ciudades.length; i++){
+            
+            list_charts += '<li><a href="#" data-id="'+i+'"><i class="fa fa-bar-chart-o fa-fw"></i> '+ciudades[i].key+'</a></li>';
+
+            for(var j = 0; j < ciudades[i]['values'].length; j++){
+                ciudades[i]['values'][j].values = ciudades[i]['values'][j].values.map(function(d){
+                    return [d[2], d[3]]
+                })
+
+            };
+
+        };
+
+        $("#list_charts").html(list_charts);
+        
+        $("li a", "#list_charts").on('click', function(e){
+            var id = $(this).data('id');
+            // console.log(id)
+            drag_chart(ciudades[id])
+        })
+        
+        drag_chart(ciudades[0])
+        drag_table(data)    
+    });
+
+function drag_table(data){
+    var rows = "";
+    data.forEach(function(d){
+        rows += '<tr class="odd gradeX">';
+        rows += '<td>'+d[0]+'</td>'
+        rows += '<td>'+d[1]+'</td>'
+        rows += '<td>'+d[4]+'</td>'
+        rows += '<td>'+d[3]+'</td>'
+        rows += '</tr>';
+    });
+
+    $('#dataTables tbody').html(rows);
+    $('#dataTables').dataTable();
+}
+
+function drag_chart(data){
+    $('h1').html(data.key);
+
+    nv.addGraph(function() {
+      var chart = nv.models.cumulativeLineChart()
+        .x(function(d) { return d[0] })
+        //adjusting, 100% is 1.00, not 100 as it is in the data
+        .y(function(d) { return d[1] / 100 })
+        .color(d3.scale.category10().range())
+        .useInteractiveGuideline(true)
+        ;
+
+      chart.xAxis
+        .tickFormat(function(d) {
+          return d3.time.format('%x')(new Date(d))
+        });
+
+      chart.yAxis.tickFormat(d3.format(',.1%'));
+
+      d3.select('#chart svg')
+        .datum(data.values)
+        .transition().duration(500)
+        .call(chart)
+        ;
+
+      nv.utils.windowResize(chart.update);
+
+      return chart;
+    });
+}
+
+    </script>
+
+
+    <!-- opendata-analisis-ibp-procesamiento-agregados.csv -->
+
+</body>
+
+</html>
+
